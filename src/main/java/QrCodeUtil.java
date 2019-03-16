@@ -23,54 +23,61 @@ public class QrCodeUtil {
     /**
      *
      * @param url
+     * @param path
+     * @param name
      * @return
      */
-    public static OutputStream creatQrCode(String url) {
-        OutputStream out =new ByteArrayOutputStream();
-        Map<EncodeHintType, String> hints = new HashMap();
+    public static File creatQrCode(String url, String path, String name) {
+        File file = new File(path, name);
+        Map<EncodeHintType, String> hints = new HashMap<EncodeHintType, String>();
         hints.put(EncodeHintType.CHARACTER_SET, "UTF-8");
         try {
             BitMatrix bitMatrix = new MultiFormatWriter().encode(url, BarcodeFormat.QR_CODE, 400, 400, hints);
-            writeToStream(bitMatrix, "jpg", out);
+            if (file.exists() || ((file.getParentFile().exists() || file.getParentFile().mkdirs()) && file.createNewFile())) {
+                writeToFile(bitMatrix, "jpg", file);
+                System.out.println("测试完成：" + file);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return out;
+        return file;
     }
 
     /**
-     * 合并图片(按指定初始x、y坐标将附加图片贴到底图之上)
+     * 合并图片(按指定初始x、y坐标将附加图片贴到底图之上。此处放中间)
      * @param backPath 背景图片路径
      * @param additionPath 附加图片路径
-     * @param x 附加图片的起始点x坐标
-     * @param y  附加图片的起始点y坐标
+     * @param toPath 生成图片的路径
      * @return
      * @throws IOException
      */
-    public static OutputStream mergeBothImage(String backPath,String additionPath,int x,int y) throws IOException{
-        InputStream is= null;
-        InputStream is2= null;
+    public static OutputStream mergeBothImage(String backPath,String additionPath, String toPath) throws IOException{
+        InputStream back= null;
+        InputStream add= null;
         OutputStream os = null;
         try{
-            is=new FileInputStream(backPath);
-            is2=new FileInputStream(additionPath);
-            BufferedImage image=ImageIO.read(is);
-            BufferedImage image2=ImageIO.read(is2);
-            Graphics g=image.getGraphics();
-            g.drawImage(image2,x,y,null);
-            JPEGImageEncoder enc= JPEGCodec.createJPEGEncoder(os);
-            enc.encode(image);
+            back = new FileInputStream(backPath);
+            add = new FileInputStream(additionPath);
+            BufferedImage backImage = ImageIO.read(back);
+            BufferedImage addImage = ImageIO.read(add);
+            Graphics g = backImage.getGraphics();
+            int x = Math.abs(backImage.getWidth()-addImage.getWidth()) / 2;
+            int y = Math.abs(backImage.getHeight()-addImage.getHeight()) / 2;
+            g.drawImage(addImage,x,y,null);
+            os = new FileOutputStream(toPath);
+            JPEGImageEncoder enc = JPEGCodec.createJPEGEncoder(os);
+            enc.encode(backImage);
         }catch(Exception e){
             e.printStackTrace();
         }finally{
             if(os != null){
                 os.close();
             }
-            if(is2 != null){
-                is2.close();
+            if(add != null){
+                add.close();
             }
-            if(is != null){
-                is.close();
+            if(back != null){
+                back.close();
             }
         }
         return os;
@@ -87,6 +94,20 @@ public class QrCodeUtil {
         BufferedImage image = toBufferedImage(matrix);
         if (!ImageIO.write(image, format, stream)) {
             throw new IOException("Could not write an image of format " + format);
+        }
+    }
+
+    /**
+     *
+     * @param matrix
+     * @param format
+     * @param file
+     * @throws IOException
+     */
+    private static void writeToFile(BitMatrix matrix, String format, File file) throws IOException {
+        BufferedImage image = toBufferedImage(matrix);
+        if (!ImageIO.write(image, format, file)) {
+            throw new IOException("Could not write an image of format " + format + " to " + file);
         }
     }
 
