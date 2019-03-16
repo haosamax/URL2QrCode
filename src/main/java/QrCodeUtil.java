@@ -61,8 +61,8 @@ public class QrCodeUtil {
             BufferedImage backImage = ImageIO.read(back);
             BufferedImage addImage = ImageIO.read(add);
             Graphics g = backImage.getGraphics();
-            int x = Math.abs(backImage.getWidth()-addImage.getWidth()) / 2;
-            int y = Math.abs(backImage.getHeight()-addImage.getHeight()) / 2;
+            int x = Math.abs(backImage.getWidth()-addImage.getWidth()) >> 1;
+            int y = Math.abs(backImage.getHeight()-addImage.getHeight()) >> 1;
             g.drawImage(addImage,x,y,null);
             os = new FileOutputStream(toPath);
             JPEGImageEncoder enc = JPEGCodec.createJPEGEncoder(os);
